@@ -12,11 +12,11 @@ type CarInput = {
   make: string;
   model: string;
   year: number | string;
-  lastServiceDate?: string;
-  nextServiceDue?: string;
-  motDueDate?: string;
-  insuranceRenewal?: string;
-  taxRenewal?: string;
+  lastServiceDate?: string | null;
+  nextServiceDue?: string | null;
+  motDueDate?: string | null;
+  insuranceRenewal?: string | null;
+  taxRenewal?: string | null;
 };
 
 type Car = CarInput & { id: number };
