@@ -33,11 +33,18 @@ function getUrgency(dateStr?: string | null) {
 export function CarTable() {
   const [filter, setFilter] = useState<"all" | "due-soon" | "overdue">("all");
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery<Car[]>({ queryKey: ["cars"], queryFn: async () => {
-    const res = await fetch("/api/cars");
-    if (!res.ok) throw new Error("Failed to load cars");
-    return res.json();
-  }});
+  const { data, isLoading, error } = useQuery<Car[]>({ 
+    queryKey: ["cars"], 
+    queryFn: async () => {
+      const res = await fetch("/api/cars");
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to load cars: ${res.status} ${errorText}`);
+      }
+      return res.json();
+    },
+    retry: 1
+  });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -61,6 +68,15 @@ export function CarTable() {
   }, [data, filter]);
 
   if (isLoading) return <div>Loading...</div>;
+  
+  if (error) {
+    return (
+      <div className="p-4 border border-destructive rounded-md bg-destructive/10">
+        <p className="text-destructive font-semibold">Error loading cars</p>
+        <p className="text-sm text-muted-foreground mt-1">{error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

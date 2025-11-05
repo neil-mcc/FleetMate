@@ -7,13 +7,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Calendar } from "./calendar";
 
 type DatePickerProps = {
-  value?: string; // YYYY-MM-DD or empty
+  value?: string | null; // YYYY-MM-DD or empty
   onChange?: (next: string) => void;
   placeholder?: string;
   disabled?: boolean;
 };
 
-function parseYmd(value?: string) {
+function parseYmd(value?: string | null) {
   if (!value) return undefined;
   const d = new Date(value);
   return isNaN(d.getTime()) ? undefined : d;
@@ -42,6 +42,7 @@ export function DatePicker({ value, onChange, placeholder = "Pick a date", disab
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0">
         <Calendar
+          mode="single"
           selected={selected}
           captionLayout="dropdown"
           fromYear={currentYear - 1}

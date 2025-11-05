@@ -10,7 +10,6 @@ export type CalendarProps = DayPickerSingleProps & { className?: string };
 export function Calendar({ className, ...props }: CalendarProps) {
   return (
     <DayPicker
-      mode="single"
       className={cn("p-2", className)}
       {...props}
     />
