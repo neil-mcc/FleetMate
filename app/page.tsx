@@ -16,7 +16,7 @@ export default function Page() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Welcome to Car Inventory</CardTitle>
+          <CardTitle>Welcome to Fleet-Mate</CardTitle>
         </CardHeader>
         <CardContent>
           <p>Please log in to manage your cars.</p>

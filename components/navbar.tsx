@@ -9,7 +9,7 @@ export function Navbar() {
   return (
     <header className="border-b">
       <div className="max-w-6xl mx-auto p-4 flex items-center justify-between">
-        <Link href="/" className="font-semibold">Car Inventory</Link>
+        <Link href="/" className="font-semibold">Fleet-Mate</Link>
         <div>
           {user ? (
             <div className="flex items-center gap-3">

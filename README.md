@@ -1,4 +1,4 @@
-# Car Inventory
+# Fleet-Mate
 
 A modern, Auth0-protected car inventory dashboard built with Next.js, shadcn/ui, Tailwind CSS, Prisma (SQLite), and React Query.
 
@@ -120,5 +120,3 @@ Open `http://localhost:3000`.
 - shadcn/ui components included locally (Button, Input, Dialog, Card, Badge, Table)
 - Dark mode supported via Tailwind CSS variables
 - React Query powers CRUD, optimistic updates can be added as an enhancement
-
-# FleetMate
