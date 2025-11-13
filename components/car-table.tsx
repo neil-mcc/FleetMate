@@ -196,7 +196,9 @@ export function CarTable() {
             return (
               <div className="flex items-center justify-between py-2">
                 <span className="text-sm text-muted-foreground">{label}</span>
-                <span className="text-sm font-medium">{formattedDate}</span>
+                <Badge variant="default" className="font-normal">
+                    {formattedDate}
+                  </Badge>
               </div>
             );
           };
@@ -244,32 +246,46 @@ export function CarTable() {
                       <Wrench className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Last Service:</span>
                       <span className="text-sm font-medium ml-auto">
-                        {format(new Date(car.lastServiceDate), "MMM d, yyyy")}
+                        <Badge variant="outline" className="font-normal">
+                          {format(new Date(car.lastServiceDate), "MMM d, yyyy")}
+                        </Badge>
                       </span>
                     </div>
                   )}
                   {car.nextServiceDue && (
                     <div className="flex items-center gap-2 py-2">
                       <Wrench className="w-4 h-4 text-muted-foreground" />
-                      {renderDateBadge(car.nextServiceDue, "Next Service")}
+                      <span className="text-sm text-muted-foreground">Next Service:</span>
+                      <span className="text-sm font-medium ml-auto">
+                        {renderDateBadge(car.nextServiceDue)}
+                      </span>
                     </div>
                   )}
                   {car.motDueDate && (
                     <div className="flex items-center gap-2 py-2">
                       <FileText className="w-4 h-4 text-muted-foreground" />
-                      {renderDateBadge(car.motDueDate, "MOT Due")}
+                      <span className="text-sm text-muted-foreground">MOT Due:</span>
+                      <span className="text-sm font-medium ml-auto">
+                        {renderDateBadge(car.motDueDate)}
+                      </span>
                     </div>
                   )}
                   {car.insuranceRenewal && (
                     <div className="flex items-center gap-2 py-2">
                       <Shield className="w-4 h-4 text-muted-foreground" />
-                      {renderDateBadge(car.insuranceRenewal, "Insurance")}
+                      <span className="text-sm text-muted-foreground">Insurance:</span>
+                      <span className="text-sm font-medium ml-auto">
+                        {renderDateBadge(car.insuranceRenewal)}
+                      </span>
                     </div>
                   )}
                   {car.taxRenewal && (
                     <div className="flex items-center gap-2 py-2">
                       <FileText className="w-4 h-4 text-muted-foreground" />
-                      {renderDateBadge(car.taxRenewal, "Tax Renewal")}
+                      <span className="text-sm text-muted-foreground">Tax Renewal:</span>
+                      <span className="text-sm font-medium ml-auto">
+                        {renderDateBadge(car.taxRenewal)}
+                      </span>
                     </div>
                   )}
                 </div>

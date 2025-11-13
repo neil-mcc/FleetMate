@@ -1,10 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Calendar } from "./calendar";
+import { Input } from "./input";
 
 type DatePickerProps = {
   value?: string | null; // YYYY-MM-DD or empty
@@ -30,9 +31,35 @@ function toYmd(date?: Date | null) {
 export function DatePicker({ value, onChange, placeholder = "Pick a date", disabled }: DatePickerProps) {
   const selected = useMemo(() => parseYmd(value), [value]);
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check if mobile on mount and resize
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || ('ontouchstart' in window));
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const currentYear = new Date().getFullYear();
 
+  // Use native date input on mobile
+  if (isMobile) {
+    return (
+      <Input
+        type="date"
+        value={value || ""}
+        onChange={(e) => onChange?.(e.target.value)}
+        disabled={disabled}
+        className="w-full"
+      />
+    );
+  }
+
+  // Use custom calendar on desktop
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
