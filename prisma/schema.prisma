@@ -18,7 +18,9 @@ model Car {
   motDueDate         DateTime?
   insuranceRenewal   DateTime?
   taxRenewal         DateTime?
+  userId             String
 
   @@index([registrationNumber])
+  @@index([userId])
 }
 

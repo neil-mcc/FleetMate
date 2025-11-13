@@ -6,8 +6,10 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = session.user.sub;
     const car = await prisma.car.findUnique({ where: { id: Number(params.id) } });
     if (!car) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (car.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     return NextResponse.json(car);
   } catch (error) {
     console.error("Error fetching car:", error);
@@ -22,6 +24,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = session.user.sub;
+
+    // Check ownership before updating
+    const existingCar = await prisma.car.findUnique({ where: { id: Number(params.id) } });
+    if (!existingCar) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (existingCar.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     const data = await request.json();
     const updated = await prisma.car.update({
       where: { id: Number(params.id) },
@@ -51,6 +60,13 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = session.user.sub;
+
+    // Check ownership before deleting
+    const existingCar = await prisma.car.findUnique({ where: { id: Number(params.id) } });
+    if (!existingCar) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (existingCar.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     await prisma.car.delete({ where: { id: Number(params.id) } });
     return NextResponse.json({ ok: true });
   } catch (error) {

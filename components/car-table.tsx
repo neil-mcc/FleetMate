@@ -3,10 +3,22 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isBefore, isWithinInterval, addDays } from "date-fns";
-import { Table, TBody, TH, THead, TR, TD } from "./ui/table";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { AddEditCarDialog } from "./add-edit-car-dialog";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "../components/ui/card";
+import {
+  Car as CarIcon,
+  Calendar,
+  Shield,
+  FileText,
+  Wrench,
+  AlertCircle,
+  Loader2,
+  Trash2,
+  Edit,
+  Filter
+} from "lucide-react";
 
 type Car = {
   id: number;
@@ -33,8 +45,8 @@ function getUrgency(dateStr?: string | null) {
 export function CarTable() {
   const [filter, setFilter] = useState<"all" | "due-soon" | "overdue">("all");
   const queryClient = useQueryClient();
-  const { data, isLoading, error } = useQuery<Car[]>({ 
-    queryKey: ["cars"], 
+  const { data, isLoading, error } = useQuery<Car[]>({
+    queryKey: ["cars"],
     queryFn: async () => {
       const res = await fetch("/api/cars");
       if (!res.ok) {
@@ -67,70 +79,226 @@ export function CarTable() {
     });
   }, [data, filter]);
 
-  if (isLoading) return <div>Loading...</div>;
-  
-  if (error) {
+  if (isLoading) {
     return (
-      <div className="p-4 border border-destructive rounded-md bg-destructive/10">
-        <p className="text-destructive font-semibold">Error loading cars</p>
-        <p className="text-sm text-muted-foreground mt-1">{error.message}</p>
+      <div className="flex items-center justify-center py-16">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading your vehicles...</p>
+        </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <Card className="border-destructive">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
+            <div>
+              <p className="font-semibold text-destructive">Error loading cars</p>
+              <p className="text-sm text-muted-foreground mt-1">{error.message}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <CarIcon className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="font-semibold text-lg mb-2">No vehicles yet</h3>
+          <p className="text-muted-foreground text-center mb-6 max-w-sm">
+            Get started by adding your first vehicle to track its service dates, MOT, insurance, and more.
+          </p>
+          <AddEditCarDialog />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const filterCounts = {
+    all: data.length,
+    "due-soon": data.filter((c) => {
+      const tags = [c.motDueDate, c.nextServiceDue, c.insuranceRenewal, c.taxRenewal]
+        .map(getUrgency)
+        .filter(Boolean);
+      return tags.includes("soon");
+    }).length,
+    overdue: data.filter((c) => {
+      const tags = [c.motDueDate, c.nextServiceDue, c.insuranceRenewal, c.taxRenewal]
+        .map(getUrgency)
+        .filter(Boolean);
+      return tags.includes("overdue");
+    }).length
+  };
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Button variant={filter === "all" ? "default" : "secondary"} onClick={() => setFilter("all")}>All</Button>
-        <Button variant={filter === "due-soon" ? "default" : "secondary"} onClick={() => setFilter("due-soon")}>Due Soon</Button>
-        <Button variant={filter === "overdue" ? "default" : "secondary"} onClick={() => setFilter("overdue")}>Overdue</Button>
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Filter className="w-4 h-4 text-muted-foreground" />
+        <Button
+          variant={filter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("all")}
+        >
+          All ({filterCounts.all})
+        </Button>
+        <Button
+          variant={filter === "due-soon" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("due-soon")}
+        >
+          Due Soon ({filterCounts["due-soon"]})
+        </Button>
+        <Button
+          variant={filter === "overdue" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("overdue")}
+        >
+          Overdue ({filterCounts.overdue})
+        </Button>
       </div>
-      <div className="overflow-x-auto">
-        <Table>
-          <THead>
-            <TR>
-              <TH>Reg</TH>
-              <TH>Make & Model</TH>
-              <TH>Year</TH>
-              <TH>Last Service</TH>
-              <TH>Next Service</TH>
-              <TH>MOT Due</TH>
-              <TH>Insurance</TH>
-              <TH>Tax</TH>
-              <TH className="text-right">Actions</TH>
-            </TR>
-          </THead>
-          <TBody>
-            {filtered?.map((car) => {
-              const badge = (d?: string | null) => {
-                const u = getUrgency(d);
-                if (!d) return null;
-                const label = format(new Date(d), "yyyy-MM-dd");
-                if (u === "overdue") return <Badge variant="destructive">{label}</Badge>;
-                if (u === "soon") return <Badge variant="secondary">{label}</Badge>;
-                return <span>{label}</span>;
-              };
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filtered.map((car) => {
+          const renderDateBadge = (dateStr?: string | null, label?: string) => {
+            if (!dateStr) return null;
+            const urgency = getUrgency(dateStr);
+            const formattedDate = format(new Date(dateStr), "MMM d, yyyy");
+
+            if (urgency === "overdue") {
               return (
-                <TR key={car.id}>
-                  <TD className="font-medium">{car.registrationNumber}</TD>
-                  <TD>{car.make} {car.model}</TD>
-                  <TD>{car.year}</TD>
-                  <TD>{car.lastServiceDate ? format(new Date(car.lastServiceDate), "yyyy-MM-dd") : "-"}</TD>
-                  <TD>{badge(car.nextServiceDue)}</TD>
-                  <TD>{badge(car.motDueDate)}</TD>
-                  <TD>{badge(car.insuranceRenewal)}</TD>
-                  <TD>{badge(car.taxRenewal)}</TD>
-                  <TD className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <AddEditCarDialog initial={car} />
-                      <Button variant="destructive" onClick={() => deleteMutation.mutate(car.id)}>Delete</Button>
-                    </div>
-                  </TD>
-                </TR>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                  <Badge variant="destructive" className="font-normal">
+                    {formattedDate}
+                  </Badge>
+                </div>
               );
-            })}
-          </TBody>
-        </Table>
+            }
+            if (urgency === "soon") {
+              return (
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                  <Badge variant="secondary" className="font-normal">
+                    {formattedDate}
+                  </Badge>
+                </div>
+              );
+            }
+            return (
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-muted-foreground">{label}</span>
+                <span className="text-sm font-medium">{formattedDate}</span>
+              </div>
+            );
+          };
+
+          const hasOverdue = [
+            car.motDueDate,
+            car.nextServiceDue,
+            car.insuranceRenewal,
+            car.taxRenewal
+          ].some((date) => getUrgency(date) === "overdue");
+
+          return (
+            <Card key={car.id} className={hasOverdue ? "border-destructive" : ""}>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <CarIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold">
+                        {car.registrationNumber}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {car.make} {car.model}
+                      </p>
+                    </div>
+                  </div>
+                  {hasOverdue && (
+                    <AlertCircle className="w-5 h-5 text-destructive" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2 pt-2">
+                  <Badge variant="outline" className="font-normal">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {car.year}
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-1 pt-0">
+                <div className="space-y-0 divide-y">
+                  {car.lastServiceDate && (
+                    <div className="flex items-center gap-2 py-2">
+                      <Wrench className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Last Service:</span>
+                      <span className="text-sm font-medium ml-auto">
+                        {format(new Date(car.lastServiceDate), "MMM d, yyyy")}
+                      </span>
+                    </div>
+                  )}
+                  {car.nextServiceDue && (
+                    <div className="flex items-center gap-2 py-2">
+                      <Wrench className="w-4 h-4 text-muted-foreground" />
+                      {renderDateBadge(car.nextServiceDue, "Next Service")}
+                    </div>
+                  )}
+                  {car.motDueDate && (
+                    <div className="flex items-center gap-2 py-2">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      {renderDateBadge(car.motDueDate, "MOT Due")}
+                    </div>
+                  )}
+                  {car.insuranceRenewal && (
+                    <div className="flex items-center gap-2 py-2">
+                      <Shield className="w-4 h-4 text-muted-foreground" />
+                      {renderDateBadge(car.insuranceRenewal, "Insurance")}
+                    </div>
+                  )}
+                  {car.taxRenewal && (
+                    <div className="flex items-center gap-2 py-2">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      {renderDateBadge(car.taxRenewal, "Tax Renewal")}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+
+              <CardFooter className="flex gap-2 pt-4">
+                <AddEditCarDialog initial={car}>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                </AddEditCarDialog>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => {
+                    if (confirm("Are you sure you want to delete this vehicle?")) {
+                      deleteMutation.mutate(car.id);
+                    }
+                  }}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
