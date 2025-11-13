@@ -20,5 +20,9 @@ const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   <div className={cn("p-6 pt-0", className)} {...props} />
 );
 
-export { Card, CardHeader, CardTitle, CardContent };
+const CardFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("p-6 pt-0", className)} {...props} />
+);
+
+export { Card, CardHeader, CardTitle, CardContent, CardFooter };
 

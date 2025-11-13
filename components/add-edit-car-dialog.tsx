@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { DatePicker } from "./ui/date-picker";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
+import { Plus } from "lucide-react";
 
 type CarInput = {
   registrationNumber: string;
@@ -21,9 +23,10 @@ type CarInput = {
 
 type Car = CarInput & { id: number };
 
-export function AddEditCarDialog({ initial }: { initial?: Car }) {
+export function AddEditCarDialog({ initial, children }: { initial?: Car; children?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<CarInput>({
+
+  const getInitialForm = (): CarInput => ({
     registrationNumber: initial?.registrationNumber || "",
     make: initial?.make || "",
     model: initial?.model || "",
@@ -34,6 +37,16 @@ export function AddEditCarDialog({ initial }: { initial?: Car }) {
     insuranceRenewal: initial?.insuranceRenewal?.slice(0, 10) || "",
     taxRenewal: initial?.taxRenewal?.slice(0, 10) || ""
   });
+
+  const [form, setForm] = useState<CarInput>(getInitialForm());
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) {
+      // Reset form when dialog opens
+      setForm(getInitialForm());
+    }
+  };
 
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -57,80 +70,139 @@ export function AddEditCarDialog({ initial }: { initial?: Car }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cars"] });
-      setOpen(false);
+      handleOpenChange(false);
     }
   });
 
-  const Title = initial ? "Edit Car" : "Add Car";
+  const title = initial ? "Edit Vehicle" : "Add New Vehicle";
+  const description = initial
+    ? "Update the details of your vehicle"
+    : "Add a new vehicle to your fleet";
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>{initial ? "Edit" : "Add Car"}</Button>
+        {children || (
+          <Button size="lg">
+            <Plus className="w-5 h-5 mr-2" />
+            Add Vehicle
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{Title}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form
-          className="grid gap-3"
+          className="grid gap-6 pt-4"
           onSubmit={(e) => {
             e.preventDefault();
             mutation.mutate();
           }}
         >
-          <div className="grid gap-1">
-            <label className="text-sm">Registration Number</label>
-            <Input
-              value={form.registrationNumber}
-              onChange={(e) => setForm((f) => ({ ...f, registrationNumber: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="grid gap-1">
-              <label className="text-sm">Make</label>
-              <Input value={form.make} onChange={(e) => setForm((f) => ({ ...f, make: e.target.value }))} required />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="registration">Registration Number *</Label>
+              <Input
+                id="registration"
+                placeholder="e.g., AB12 CDE"
+                value={form.registrationNumber}
+                onChange={(e) => setForm((f) => ({ ...f, registrationNumber: e.target.value }))}
+                required
+              />
             </div>
-            <div className="grid gap-1">
-              <label className="text-sm">Model</label>
-              <Input value={form.model} onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} required />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="make">Make *</Label>
+                <Input
+                  id="make"
+                  placeholder="e.g., Toyota"
+                  value={form.make}
+                  onChange={(e) => setForm((f) => ({ ...f, make: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="model">Model *</Label>
+                <Input
+                  id="model"
+                  placeholder="e.g., Corolla"
+                  value={form.model}
+                  onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
+                  required
+                />
+              </div>
             </div>
-          </div>
-          <div className="grid gap-1">
-            <label className="text-sm">Year</label>
-            <Input
-              type="number"
-              value={form.year}
-              onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="grid gap-1">
-              <label className="text-sm">Last Service</label>
-              <DatePicker value={form.lastServiceDate} onChange={(v) => setForm((f) => ({ ...f, lastServiceDate: v }))} />
-            </div>
-            <div className="grid gap-1">
-              <label className="text-sm">Next Service Due</label>
-              <DatePicker value={form.nextServiceDue} onChange={(v) => setForm((f) => ({ ...f, nextServiceDue: v }))} />
-            </div>
-            <div className="grid gap-1">
-              <label className="text-sm">MOT Due</label>
-              <DatePicker value={form.motDueDate} onChange={(v) => setForm((f) => ({ ...f, motDueDate: v }))} />
-            </div>
-            <div className="grid gap-1">
-              <label className="text-sm">Insurance Renewal</label>
-              <DatePicker value={form.insuranceRenewal} onChange={(v) => setForm((f) => ({ ...f, insuranceRenewal: v }))} />
-            </div>
-            <div className="grid gap-1">
-              <label className="text-sm">Tax Renewal</label>
-              <DatePicker value={form.taxRenewal} onChange={(v) => setForm((f) => ({ ...f, taxRenewal: v }))} />
+            <div className="space-y-2">
+              <Label htmlFor="year">Year *</Label>
+              <Input
+                id="year"
+                type="number"
+                placeholder="e.g., 2020"
+                min="1900"
+                max={new Date().getFullYear() + 1}
+                value={form.year}
+                onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
+                required
+              />
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? "Saving..." : "Save"}</Button>
+
+          <div className="space-y-4 pt-2">
+            <h4 className="font-semibold text-sm text-muted-foreground">Service & Maintenance</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="lastService">Last Service Date</Label>
+                <DatePicker
+                  value={form.lastServiceDate}
+                  onChange={(v) => setForm((f) => ({ ...f, lastServiceDate: v }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nextService">Next Service Due</Label>
+                <DatePicker
+                  value={form.nextServiceDue}
+                  onChange={(v) => setForm((f) => ({ ...f, nextServiceDue: v }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-semibold text-sm text-muted-foreground">Legal Requirements</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="mot">MOT Due Date</Label>
+                <DatePicker
+                  value={form.motDueDate}
+                  onChange={(v) => setForm((f) => ({ ...f, motDueDate: v }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="insurance">Insurance Renewal</Label>
+                <DatePicker
+                  value={form.insuranceRenewal}
+                  onChange={(v) => setForm((f) => ({ ...f, insuranceRenewal: v }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tax">Tax Renewal</Label>
+                <DatePicker
+                  value={form.taxRenewal}
+                  onChange={(v) => setForm((f) => ({ ...f, taxRenewal: v }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? "Saving..." : initial ? "Update Vehicle" : "Add Vehicle"}
+            </Button>
           </div>
         </form>
       </DialogContent>

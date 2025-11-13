@@ -6,7 +6,11 @@ export async function GET() {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const cars = await prisma.car.findMany({ orderBy: { registrationNumber: "asc" } });
+    const userId = session.user.sub;
+    const cars = await prisma.car.findMany({
+      where: { userId },
+      orderBy: { registrationNumber: "asc" }
+    });
     return NextResponse.json(cars);
   } catch (error) {
     console.error("Error fetching cars:", error);
@@ -21,6 +25,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = session.user.sub;
     const data = await request.json();
     const created = await prisma.car.create({
       data: {
@@ -32,7 +37,8 @@ export async function POST(request: Request) {
         nextServiceDue: data.nextServiceDue ? new Date(data.nextServiceDue) : null,
         motDueDate: data.motDueDate ? new Date(data.motDueDate) : null,
         insuranceRenewal: data.insuranceRenewal ? new Date(data.insuranceRenewal) : null,
-        taxRenewal: data.taxRenewal ? new Date(data.taxRenewal) : null
+        taxRenewal: data.taxRenewal ? new Date(data.taxRenewal) : null,
+        userId
       }
     });
     return NextResponse.json(created, { status: 201 });

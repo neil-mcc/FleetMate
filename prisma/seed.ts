@@ -1,6 +1,9 @@
 import { prisma } from "../lib/prisma";
 
 async function main() {
+  // Use a test user ID for seeding
+  const testUserId = "test-user-id";
+
   await prisma.car.createMany({
     data: [
       {
@@ -12,7 +15,8 @@ async function main() {
         nextServiceDue: new Date("2025-05-01"),
         motDueDate: new Date("2025-02-15"),
         insuranceRenewal: new Date("2025-03-01"),
-        taxRenewal: new Date("2025-04-01")
+        taxRenewal: new Date("2025-04-01"),
+        userId: testUserId
       },
       {
         registrationNumber: "XY34 ZZZ",
@@ -23,7 +27,8 @@ async function main() {
         nextServiceDue: new Date("2025-12-01"),
         motDueDate: new Date("2026-01-20"),
         insuranceRenewal: new Date("2025-11-15"),
-        taxRenewal: new Date("2025-12-31")
+        taxRenewal: new Date("2025-12-31"),
+        userId: testUserId
       }
     ],
     skipDuplicates: true
